@@ -79,12 +79,14 @@ try:
     
     # Egyéb időjárási adatok
     st.subheader("További időjárási adatok")
-    col4, col5, col6 = st.columns(3)
+    col4, col5, col6, col7 = st.columns(4)
     with col4:
         st.metric("Légnyomás (hPa)", current_weather["main"]["pressure"])
     with col5:
         st.metric("Szélirány", wind_direction)
     with col6:
+        st.metric("Szél ereje", beaufort_category)
+    with col7:
         st.metric("Égkép", cloudiness)
     
     # Térkép megjelenítés
