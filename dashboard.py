@@ -85,7 +85,7 @@ try:
     with col5:
         st.metric("Szélirány", wind_direction)
     with col6:
-        st.metric("Szél ereje", beaufort_category)
+        st.metric("Szélerősség", beaufort_category)
     with col7:
         st.metric("Égkép", cloudiness)
     
