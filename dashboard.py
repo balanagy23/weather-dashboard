@@ -54,7 +54,7 @@ def get_weather_data(city: str, endpoint: str) -> dict:
         return {}
 
 st.set_page_config(page_title="Weather Dashboard", layout="wide")
-st.title("Enapló - Weather Map & Data Visualization App")
+st.title("Enapló - Weather Map")
 
 city = st.text_input("Város neve:", "Budapest").capitalize()
 try:
