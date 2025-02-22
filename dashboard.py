@@ -71,7 +71,7 @@ try:
     st.subheader(f"Jelenlegi időjárás {city} városban")
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Hőmérséklet (°C)", current_weather["main"]["temp"])
+        st.metric("Hőmérséklet (°C)", int(current_weather["main"]["temp"]))
     with col2:
         st.metric("Páratartalom (%)", current_weather["main"]["humidity"])
     with col3:
@@ -106,9 +106,9 @@ try:
     st.subheader(f"Hőmérsékleti átlagok {city} városban")
     col7, col8 = st.columns(2)
     with col7:
-        st.metric("Délelőtti átlaghőmérséklet (°C)", df_forecast["Délelőtti hőmérséklet"].iloc[0])
+        st.metric("Délelőtti átlaghőmérséklet (°C)", int(df_forecast["Délelőtti hőmérséklet"].iloc[0]))
     with col8:
-        st.metric("Délutáni átlaghőmérséklet (°C)", df_forecast["Délutáni hőmérséklet"].iloc[0])
+        st.metric("Délutáni átlaghőmérséklet (°C)", int(df_forecast["Délutáni hőmérséklet"].iloc[0]))
     
 except requests.exceptions.RequestException as e:
     st.error(f"Hiba történt az adatok lekérésekor: {e}")
