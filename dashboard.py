@@ -30,11 +30,17 @@ CLOUDINESS_MAP = {
     "overcast clouds": "Borult"
 }
 
+DIRECTIONS = ["É", "ÉK", "K", "DK", "D", "DNY", "NY", "ÉNY"]
+
 def get_beaufort_scale(speed):
     for lower, upper, category in BEAUFORT_SCALE:
         if lower <= speed <= upper:
             return category
     return "Ismeretlen"
+
+def get_wind_direction(degrees):
+    index = round(degrees / 45) % 8
+    return f"{degrees}° ({DIRECTIONS[index]})"
 
 @st.cache_data(ttl=86400)
 def get_weather_data(city: str, endpoint: str) -> dict:
@@ -59,6 +65,7 @@ try:
     wind_speed = current_weather["wind"]["speed"]
     beaufort_category = get_beaufort_scale(wind_speed)
     cloudiness = CLOUDINESS_MAP.get(current_weather["weather"][0]["description"], "Ismeretlen")
+    wind_direction = get_wind_direction(current_weather["wind"]["deg"])
     
     # Jelenlegi időjárás mutatók
     st.subheader(f"Jelenlegi időjárás {city} városban")
@@ -76,7 +83,7 @@ try:
     with col4:
         st.metric("Légnyomás (hPa)", current_weather["main"]["pressure"])
     with col5:
-        st.metric("Szélirány (°)", current_weather["wind"]["deg"])
+        st.metric("Szélirány", wind_direction)
     with col6:
         st.metric("Égkép", cloudiness)
     
@@ -88,24 +95,20 @@ try:
     st.map(city_location)
     
     # Előrejelzési adatok feldolgozása
-    forecast_data = {
-        "Dátum": [datetime.datetime.fromtimestamp(item["dt"]) for item in forecast["list"]],
-        "Hőmérséklet (°C)": [item["main"]["temp"] for item in forecast["list"]],
-        "Páratartalom (%)": [item["main"]["humidity"] for item in forecast["list"]],
-        "Szélsebesség (m/s)": [item["wind"]["speed"] for item in forecast["list"]],
-        "Szélirány (°)": [item["wind"]["deg"] for item in forecast["list"]],
-        "Égkép": [CLOUDINESS_MAP.get(item["weather"][0]["description"], "Ismeretlen") for item in forecast["list"]],
-        "Csapadék (mm)": [item.get("rain", {}).get("3h", 0) for item in forecast["list"]],
-        "Beaufort skála": [get_beaufort_scale(item["wind"]["speed"]) for item in forecast["list"]]
-    }
-    df_forecast = pd.DataFrame(forecast_data)
+    df_forecast = pd.DataFrame(forecast["list"])
+    df_forecast["Dátum"] = df_forecast["dt"].apply(lambda x: datetime.datetime.fromtimestamp(x))
+    df_forecast["Óra"] = df_forecast["Dátum"].dt.hour
     
-    # Az aktuális szélerősség kiemelése a táblázatban
-    df_forecast_style = df_forecast.style.apply(lambda row: ['background-color: yellow' if row["Beaufort skála"] == beaufort_category else '' for _ in row], axis=1)
+    # Délelőtti és délutáni hőmérséklet számítása
+    df_forecast["Délelőtti hőmérséklet"] = df_forecast[df_forecast["Óra"].between(6, 12)]["main"].apply(lambda x: x["temp"]).mean()
+    df_forecast["Délutáni hőmérséklet"] = df_forecast[df_forecast["Óra"].between(12, 18)]["main"].apply(lambda x: x["temp"]).mean()
     
-    # Előrejelzési adatok megjelenítése
-    st.subheader(f"Részletes időjárási előrejelzés {city} városra")
-    st.dataframe(df_forecast_style)
+    st.subheader(f"Hőmérsékleti átlagok {city} városban")
+    col7, col8 = st.columns(2)
+    with col7:
+        st.metric("Délelőtti átlaghőmérséklet (°C)", df_forecast["Délelőtti hőmérséklet"].iloc[0])
+    with col8:
+        st.metric("Délutáni átlaghőmérséklet (°C)", df_forecast["Délutáni hőmérséklet"].iloc[0])
     
 except requests.exceptions.RequestException as e:
     st.error(f"Hiba történt az adatok lekérésekor: {e}")
